@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookfinder | 책 검색</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFF8EC; --ink:#3B3128; --leaf:#6B9B6E; --coral:#F2985C; --sky:#6FB7C9; --card:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Gowun Dodum', sans-serif;
+  }
+  header{
+    padding:24px 16px 12px; text-align:center;
+  }
+  header h1{
+    font-family:'Jua', sans-serif; font-size:28px; margin:0 0 4px;
+  }
+  header p{ margin:0; color:#3b312899; font-size:14px; }
+
+  .search-wrap{
+    max-width:640px; margin:20px auto; padding:0 16px;
+    display:flex; gap:8px;
+  }
+  #q{
+    flex:1; padding:12px 16px; border:2px solid #3b312833; border-radius:12px;
+    font-family:inherit; font-size:15px;
+  }
+  #q:focus{ outline:2px solid var(--leaf); border-color:var(--leaf); }
+  #searchBtn{
+    padding:12px 22px; border:none; border-radius:12px; background:var(--leaf);
+    color:#fff; font-family:'Jua',sans-serif; font-size:15px; cursor:pointer;
+  }
+  #searchBtn:hover{ filter:brightness(1.05); }
+  #searchBtn:disabled{ opacity:.6; cursor:default; }
+
+  #status{ text-align:center; color:#3b312899; font-size:14px; min-height:20px; margin-bottom:8px; }
+
+  #results{
+    max-width:1100px; margin:0 auto; padding:0 16px 60px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+    gap:18px;
+  }
+  .card{
+    background:var(--card); border-radius:16px; overflow:hidden;
+    box-shadow:0 2px 4px rgba(59,49,40,.08), 0 8px 18px rgba(59,49,40,.08);
+    display:flex; flex-direction:column;
+  }
+  .card .cover{
+    width:100%; aspect-ratio:3/4.2; background:#eee; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card .cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .card .cover .noimg{ font-size:36px; color:#3b312855; }
+  .card .body{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .card h3{ font-family:'Jua',sans-serif; font-size:16px; margin:0; line-height:1.35; }
+  .card .meta{ font-size:13px; color:#3b3128aa; }
+  .card .desc{
+    font-size:13px; line-height:1.5; color:#3b3128cc; margin-top:4px;
+    display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .card .desc.expanded{ -webkit-line-clamp:unset; }
+  .card .more-btn{
+    align-self:flex-start; background:none; border:none; color:var(--sky);
+    text-decoration:underline; font-family:inherit; font-size:12px; cursor:pointer; padding:0; margin-top:2px;
+  }
+  .card .link{
+    margin-top:auto; padding-top:8px; font-size:12px;
+  }
+  .card .link a{ color:var(--coral); text-decoration:none; font-weight:bold; }
+  .card .link a:hover{ text-decoration:underline; }
+
+  .empty-state{
+    text-align:center; color:#3b312888; padding:60px 20px; grid-column:1/-1;
+  }
+
+  footer{
+    text-align:center; font-size:12px; color:#3b312877; padding:24px 16px 40px;
+  }
+  footer a{ color:var(--sky); }
+
+  .skeleton{ background:linear-gradient(90deg,#eee 25%,#f5f5f5 37%,#eee 63%); background-size:400% 100%; animation:sk 1.3s ease infinite; }
+  @keyframes sk{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Bookfinder</h1>
+  <p>책 제목이나 ISBN으로 검색해 보세요</p>
+</header>
+
+<div class="search-wrap">
+  <input id="q" type="text" placeholder="예: 어린왕자 또는 9788937460449" autofocus>
+  <button id="searchBtn">검색</button>
+</div>
+<p id="status"></p>
+
+<div id="results"></div>
+
+<footer>
+  도서 데이터 제공: <a href="https://www.aladin.co.kr" target="_blank" rel="noopener">알라딘 인터넷서점</a>
+</footer>
+
+<script>
+/* ===== 알라딘 오픈API 연동 (JSONP) ===== */
+const TTB_KEY = 'ttbyoonokk0230005';
+
+function isISBN(s){
+  const t = s.replace(/[-\s]/g,'');
+  return /^(\d{10}|\d{13})$/.test(t);
+}
+
+function jsonpCall(url){
+  return new Promise((resolve, reject) => {
+    const cbName = 'aladinCb_' + Math.random().toString(36).slice(2,10);
+    const script = document.createElement('script');
+    let done = false;
+    function cleanup(){ try{ delete window[cbName]; }catch(e){} script.remove(); }
+    window[cbName] = function(a, b){
+      if(done) return; done = true;
+      const data = (b !== undefined) ? b : a;
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => { if(done) return; done = true; cleanup(); reject(new Error('네트워크 오류')); };
+    script.src = url + '&CallBack=' + cbName;
+    document.head.appendChild(script);
+    setTimeout(() => { if(done) return; done = true; cleanup(); reject(new Error('시간 초과')); }, 8000);
+  });
+}
+
+async function searchBooks(query){
+  const base = 'https://www.aladin.co.kr/ttb/api/';
+  let url;
+  if(isISBN(query)){
+    const clean = query.replace(/[-\s]/g,'');
+    const idType = clean.length === 13 ? 'ISBN13' : 'ISBN';
+    url = base + 'ItemLookUp.aspx?ttbkey=' + encodeURIComponent(TTB_KEY)
+        + '&itemIdType=' + idType + '&ItemId=' + encodeURIComponent(clean)
+        + '&output=js&Version=20131101&Cover=Big&OptResult=fulldescription';
+  } else {
+    url = base + 'ItemSearch.aspx?ttbkey=' + encodeURIComponent(TTB_KEY)
+        + '&Query=' + encodeURIComponent(query) + '&QueryType=Title'
+        + '&MaxResults=20&start=1&SearchTarget=Book'
+        + '&output=js&Version=20131101&Cover=Big';
+  }
+  const data = await jsonpCall(url);
+  if(!data) throw new Error('응답 없음');
+  if(data.errorCode){ throw new Error(data.errorMessage || 'API 오류'); }
+  return data.item || [];
+}
+
+function escapeHtml(s){
+  return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function cleanDesc(raw){
+  return String(raw || '').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+}
+
+function cardHtml(item){
+  const cover = item.cover
+    ? `<img src="${item.cover}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'noimg\\'>📕</span>'">`
+    : `<span class="noimg">📕</span>`;
+  const desc = cleanDesc(item.fullDescription || item.description);
+  return `
+    <div class="card">
+      <div class="cover">${cover}</div>
+      <div class="body">
+        <h3>${escapeHtml(item.title)}</h3>
+        <p class="meta">${escapeHtml(item.author || '저자 미상')}</p>
+        <p class="meta">${escapeHtml(item.publisher || '')} ${item.pubDate ? '· ' + escapeHtml(item.pubDate) : ''}</p>
+        ${desc ? `<p class="desc">${escapeHtml(desc)}</p><button class="more-btn" data-toggle>더보기</button>` : ''}
+        <p class="link"><a href="${item.link || '#'}" target="_blank" rel="noopener">알라딘에서 보기 ↗</a></p>
+      </div>
+    </div>`;
+}
+
+function skeletonHtml(n){
+  return Array.from({length:n}).map(() => `
+    <div class="card">
+      <div class="cover skeleton"></div>
+      <div class="body">
+        <div class="skeleton" style="height:16px;border-radius:4px;"></div>
+        <div class="skeleton" style="height:12px;width:60%;border-radius:4px;"></div>
+      </div>
+    </div>`).join('');
+}
+
+const resultsEl = document.getElementById('results');
+const statusEl = document.getElementById('status');
+const qEl = document.getElementById('q');
+const btnEl = document.getElementById('searchBtn');
+
+async function runSearch(){
+  const query = qEl.value.trim();
+  if(!query){ statusEl.textContent = '검색어를 입력해 주세요.'; return; }
+  btnEl.disabled = true;
+  statusEl.textContent = '검색 중이에요…';
+  resultsEl.innerHTML = skeletonHtml(6);
+  try{
+    const items = await searchBooks(query);
+    if(!items.length){
+      resultsEl.innerHTML = `<p class="empty-state">검색 결과가 없어요. 다른 검색어로 시도해 보세요.</p>`;
+      statusEl.textContent = '';
+    } else {
+      resultsEl.innerHTML = items.map(cardHtml).join('');
+      statusEl.textContent = `${items.length}권을 찾았어요`;
+      resultsEl.querySelectorAll('[data-toggle]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const desc = btn.previousElementSibling;
+          desc.classList.toggle('expanded');
+          btn.textContent = desc.classList.contains('expanded') ? '접기' : '더보기';
+        });
+      });
+    }
+  } catch(err){
+    resultsEl.innerHTML = `<p class="empty-state">검색 중 문제가 발생했어요.<br>(${escapeHtml(err.message)})</p>`;
+    statusEl.textContent = '';
+  } finally {
+    btnEl.disabled = false;
+  }
+}
+
+btnEl.addEventListener('click', runSearch);
+qEl.addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
+</script>
+</body>
+</html>
