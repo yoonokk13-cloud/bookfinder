@@ -217,51 +217,8 @@
       return /^(\d{10}|\d{13})$/.test(t);
     }
 
-    // 알라딘 전용 JSONP 호출 함수
-    function fetchAladdinJSONP(url) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'aladinCallback_' + Date.now();
-        const script = document.createElement('script');
-        let isDone = false;
-
-        const timeout = setTimeout(() => {
-          if (!isDone) {
-            isDone = true;
-            cleanup();
-            reject(new Error('요청 시간이 초과되었습니다.'));
-          }
-        }, 8000);
-
-        function cleanup() {
-          if (script.parentNode) script.parentNode.removeChild(script);
-          delete window[callbackName];
-          clearTimeout(timeout);
-        }
-
-        window[callbackName] = function(data) {
-          if (!isDone) {
-            isDone = true;
-            cleanup();
-            resolve(data);
-          }
-        };
-
-        script.onerror = function() {
-          if (!isDone) {
-            isDone = true;
-            cleanup();
-            reject(new Error('알라딘 서버와 통신할 수 없습니다.'));
-          }
-        };
-
-        const delimiter = url.includes('?') ? '&' : '?';
-        script.src = `${url}${delimiter}CallBack=${callbackName}`;
-        document.body.appendChild(script);
-      });
-    }
-
     async function searchBooks(query) {
-      const base = 'https://www.aladdin.co.kr/ttb/api/';
+      const base = 'http://www.aladin.co.kr/ttb/api/';
       let aladinUrl;
 
       if (isISBN(query)) {
@@ -277,7 +234,21 @@
           '&output=js&Version=20131101&Cover=Big';
       }
 
-      const data = await fetchAladdinJSONP(aladinUrl);
+      // 안정적인 HTTPS 프록시 서버 경유
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(aladinUrl);
+
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error('네트워크 응답 오류 (' + res.status + ')');
+      
+      const raw = await res.text();
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        // 끝자리 세미콜론 제거 후 파싱
+        const cleaned = raw.replace(/;\s*$/, '').trim();
+        data = JSON.parse(cleaned);
+      }
 
       if (data && data.errorCode) {
         throw new Error(data.errorMessage || 'API 오류');
