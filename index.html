@@ -217,6 +217,38 @@
       return /^(\d{10}|\d{13})$/.test(t);
     }
 
+    // JSONP 방식으로 알라딘 API 호출 (CORS 우회)
+    function fetchAladdinJSONP(url) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'aladdin_cb_' + Math.floor(Math.random() * 1000000);
+        const script = document.createElement('script');
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error('요청 시간이 초과되었습니다.'));
+        }, 10000);
+
+        function cleanup() {
+          if (script.parentNode) script.parentNode.removeChild(script);
+          delete window[callbackName];
+          clearTimeout(timeout);
+        }
+
+        window[callbackName] = function(data) {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = function() {
+          cleanup();
+          reject(new Error('알라딘 서버와 통신할 수 없습니다.'));
+        };
+
+        const delimiter = url.includes('?') ? '&' : '?';
+        script.src = `${url}${delimiter}callback=${callbackName}`;
+        document.body.appendChild(script);
+      });
+    }
+
     async function searchBooks(query) {
       const base = 'https://www.aladdin.co.kr/ttb/api/';
       let aladinUrl;
@@ -234,23 +266,7 @@
           '&output=js&Version=20131101&Cover=Big';
       }
 
-      // CORS 프록시 적용
-      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(aladinUrl);
-
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('네트워크 응답 오류');
-      
-      const jsonWrapper = await response.json();
-      const rawText = jsonWrapper.contents;
-      
-      // JSON 파싱 (알라딘 JS 형식 대응)
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch (e) {
-        const cleaned = rawText.replace(/;$/, '').trim();
-        data = JSON.parse(cleaned);
-      }
+      const data = await fetchAladdinJSONP(aladinUrl);
 
       if (data.errorCode) {
         throw new Error(data.errorMessage || 'API 오류');
