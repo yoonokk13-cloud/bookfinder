@@ -1,328 +1,620 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bookfinder | 책 검색</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --radius: 12px;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-    }
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      padding: 40px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      width: 100%;
-      max-width: 800px;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    header h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
-    header p {
-      color: var(--text-muted);
-      font-size: 1rem;
-    }
-    .search-box {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 14px 18px;
-      font-size: 1rem;
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input[type="text"]:focus {
-      border-color: var(--primary);
-    }
-    button.search-btn {
-      padding: 14px 28px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: white;
-      background-color: var(--primary);
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: background-color 0.2s;
-      white-space: nowrap;
-    }
-    button.search-btn:hover {
-      background-color: var(--primary-hover);
-    }
-    #status {
-      text-align: center;
-      margin: 20px 0;
-      font-size: 1.05rem;
-      color: var(--text-muted);
-    }
-    #results {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 20px;
-      display: flex;
-      gap: 20px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-    }
-    .cover {
-      width: 110px;
-      min-width: 110px;
-      height: 160px;
-      background: #eee;
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .cover img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .noimg {
-      font-size: 2.5rem;
-    }
-    .body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .body h3 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-      line-height: 1.3;
-    }
-    .meta {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    .desc {
-      font-size: 0.92rem;
-      color: #475569;
-      margin-top: 8px;
-      margin-bottom: 8px;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      line-height: 1.5;
-    }
-    .desc.expanded {
-      -webkit-line-clamp: unset;
-      overflow: visible;
-    }
-    .more-btn {
-      align-self: flex-start;
-      background: none;
-      border: none;
-      color: var(--primary);
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0;
-      margin-bottom: 12px;
-    }
-    .link {
-      margin-top: auto;
-    }
-    .link a {
-      color: var(--primary);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-    .link a:hover {
-      text-decoration: underline;
-    }
-    footer {
-      margin-top: 50px;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-    footer a {
-      color: var(--text-muted);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리도서관 책 찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --accent: #f4a261;
+    --accent-hover: #e8934a;
+    --bg: #f8fafc;
+    --shelf-bg: #f4ecd8;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 14px;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+  .app { max-width: 1080px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* ---------- 상단 바 ---------- */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    padding: 18px 0;
+  }
+  .brand { font-size: 1.3rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+  .tabs { display: flex; gap: 8px; background: #eef0f6; padding: 5px; border-radius: 999px; }
+  .tab-btn {
+    border: none; background: transparent; padding: 10px 18px; border-radius: 999px;
+    font-size: 0.95rem; font-weight: 700; color: var(--text-muted); cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .tab-btn.active { background: #1e2a4a; color: #fff; }
+  .tab-btn:not(.active):hover { color: var(--text); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---------- 책장 구경하기 ---------- */
+  .shelf-intro { text-align: center; padding: 28px 10px 20px; }
+  .shelf-intro h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+  .shelf-intro p { color: var(--text-muted); font-size: 0.95rem; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .chip {
+    border: 2px solid var(--border); background: #fff; color: var(--text);
+    padding: 9px 16px; border-radius: 999px; font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--chip-color, var(--primary)); }
+  .chip.active {
+    background: var(--chip-color, #1e2a4a); border-color: var(--chip-color, #1e2a4a); color: #fff;
+  }
+
+  .shuffle-wrap { text-align: center; margin-bottom: 24px; }
+  .shuffle-btn {
+    border: none; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.95rem;
+    padding: 12px 26px; border-radius: 999px; cursor: pointer; box-shadow: var(--shadow);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .shuffle-btn:hover { background: var(--accent-hover); }
+  .shuffle-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .shelf-frame {
+    background: var(--shelf-bg); border-radius: 20px; padding: 28px 22px;
+  }
+  .shelf-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 16px;
+  }
+  .shelf-card-wrap { display: flex; flex-direction: column; gap: 8px; cursor: pointer; }
+  .shelf-cover {
+    position: relative; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden;
+    box-shadow: var(--shadow); background: var(--cover-color, #94a3b8);
+    display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px;
+    transition: transform 0.15s;
+  }
+  .shelf-card-wrap:hover .shelf-cover { transform: translateY(-3px) scale(1.02); }
+  .shelf-cover .cover-icon { font-size: 2rem; margin-bottom: 6px; }
+  .shelf-cover .cover-title { color: #fff; font-weight: 700; font-size: 0.82rem; line-height: 1.3; text-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+  .shelf-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.25s; }
+  .shelf-cover img.loaded { opacity: 1; }
+  .shelf-cover .spinner {
+    position: absolute; top: 6px; right: 6px; width: 14px; height: 14px;
+    border: 2px solid rgb(255 255 255 / 0.5); border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .shelf-caption {
+    font-size: 0.8rem; color: var(--text-muted); text-align: center;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .shelf-empty { text-align: center; color: var(--text-muted); padding: 40px 0; }
+
+  /* ---------- 책 검색하기 ---------- */
+  .search-box { display: flex; gap: 10px; margin: 24px 0; }
+  input[type="text"] {
+    flex: 1; padding: 14px 18px; font-size: 1rem; border: 2px solid var(--border);
+    border-radius: var(--radius); outline: none; transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--primary); }
+  button.search-btn {
+    padding: 14px 28px; font-size: 1rem; font-weight: 700; color: #fff;
+    background: var(--primary); border: none; border-radius: var(--radius); cursor: pointer;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  button.search-btn:hover { background: var(--primary-hover); }
+  button.search-btn:disabled { opacity: 0.6; cursor: default; }
+  #status { text-align: center; margin: 16px 0; font-size: 1.02rem; color: var(--text-muted); }
+  #results { display: flex; flex-direction: column; gap: 20px; }
+
+  .card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 20px; display: flex;
+    gap: 20px; box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .cover { width: 110px; min-width: 110px; height: 160px; background: #eee; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .cover img { width: 100%; height: 100%; object-fit: cover; }
+  .noimg { font-size: 2.5rem; }
+  .body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .body h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .meta { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; }
+  .desc { font-size: 0.92rem; color: #475569; margin-top: 8px; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+  .desc.expanded { -webkit-line-clamp: unset; overflow: visible; }
+  .more-btn { align-self: flex-start; background: none; border: none; color: var(--primary); font-size: 0.85rem; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 12px; }
+  .link { margin-top: auto; }
+  .link a { color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+  .link a:hover { text-decoration: underline; }
+
+  footer { margin-top: 50px; text-align: center; font-size: 0.85rem; color: var(--text-muted); }
+  footer a { color: var(--text-muted); }
+
+  /* ---------- 상세 모달 ---------- */
+  .modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal.hidden { display: none; }
+  .modal-backdrop { position: absolute; inset: 0; background: rgb(15 23 42 / 0.55); }
+  .modal-card {
+    position: relative; background: #fff; border-radius: 18px; max-width: 560px; width: 100%;
+    max-height: 88vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 40px -8px rgb(0 0 0 / 0.3);
+  }
+  .modal-close { position: absolute; top: 14px; right: 14px; border: none; background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; }
+  .modal-top { display: flex; gap: 18px; margin-bottom: 16px; }
+  .modal-cover { width: 120px; min-width: 120px; height: 170px; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; background: #94a3b8; }
+  .modal-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .modal-cover .cover-icon { font-size: 2.4rem; }
+  .modal-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; line-height: 1.35; }
+  .modal-meta { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 3px; }
+  .badge { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
+  .badge.ok { background: #dcfce7; color: #15803d; }
+  .badge.no { background: #fee2e2; color: #b91c1c; }
+  .badge.etc { background: #e0e7ff; color: #4338ca; }
+  .modal-desc { font-size: 0.92rem; color: #334155; line-height: 1.6; margin: 16px 0; white-space: pre-line; }
+  .modal-desc.muted { color: var(--text-muted); font-style: italic; }
+  .modal-link { display: inline-block; margin-top: 4px; color: var(--primary); font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+  .modal-link:hover { text-decoration: underline; }
+
+  @media (max-width: 480px) {
+    .shelf-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    .modal-top { flex-direction: column; }
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>📚 Bookfinder</h1>
-      <p>책 제목이나 ISBN으로 검색해 보세요</p>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">📚 우리도서관 책 찾기</div>
+      <nav class="tabs">
+        <button class="tab-btn active" data-tab="shelf" type="button">📚 책장 구경하기</button>
+        <button class="tab-btn" data-tab="search" type="button">🔍 책 검색하기</button>
+      </nav>
     </header>
 
-    <div class="search-box">
-      <input type="text" id="query" placeholder="예: 어린왕자 또는 9788932917245" autofocus>
-      <button class="search-btn" id="searchBtn">검색</button>
-    </div>
+    <main>
+      <!-- 책장 구경하기 -->
+      <section id="tab-shelf" class="tab-panel active">
+        <div class="shelf-intro">
+          <h1>📖 오늘은 어떤 책과 만날까요?</h1>
+          <p>책 표지를 눌러서 구경해 보세요. 마음에 드는 책을 발견하면 살짝 꺼내 볼 수 있어요.</p>
+        </div>
 
-    <p id="status"></p>
-    <div id="results"></div>
+        <div class="chip-row" id="chipRow"></div>
+
+        <div class="shuffle-wrap">
+          <button class="shuffle-btn" id="shuffleBtn" type="button">🔄 다른 책장 구경하기</button>
+        </div>
+
+        <div class="shelf-frame">
+          <div class="shelf-grid" id="shelfGrid"></div>
+          <p class="shelf-empty" id="shelfEmpty" style="display:none;">이 주제에는 아직 책이 없어요.</p>
+        </div>
+      </section>
+
+      <!-- 책 검색하기 -->
+      <section id="tab-search" class="tab-panel">
+        <div class="search-box">
+          <input type="text" id="query" placeholder="예: 어린왕자 또는 9788932917245">
+          <button class="search-btn" id="searchBtn" type="button">검색</button>
+        </div>
+        <p id="status"></p>
+        <div id="results"></div>
+      </section>
+    </main>
 
     <footer>
       도서 데이터 제공: <a href="https://www.aladin.co.kr" target="_blank" rel="noopener">알라딘 인터넷서점</a>
     </footer>
   </div>
 
-  <script>
-    const TTB_KEY = 'ttbyoonokk0230005';
+  <!-- 상세 모달 -->
+  <div class="modal hidden" id="modal">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card">
+      <button class="modal-close" data-close type="button">✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
 
-    function isISBN(s) {
-      const t = s.replace(/[-\s]/g, '');
-      return /^(\d{10}|\d{13})$/.test(t);
-    }
+<script>
+(function () {
+  'use strict';
 
-    async function searchBooks(query) {
-      const base = 'http://www.aladin.co.kr/ttb/api/';
-      let aladinUrl;
+  /* =========================================================
+   * 0. 공용 설정 — 나중에 국립중앙도서관 API 등을 추가하거나
+   *    CORS 프록시를 바꿀 때 이 블록만 수정하면 된다.
+   * =======================================================*/
+  const TTB_KEY = 'ttbyoonokk0230005';
+  const ALADIN_BASE = 'https://www.aladin.co.kr/ttb/api/';
+  const BOOKS_JSON_URL = 'data/books.json';
+  const SHELF_SAMPLE_SIZE = 12;   // 책장 한 번에 보여줄 카드 수 (API 호출량과 직결)
+  const HYDRATE_CONCURRENCY = 3;  // 표지 조회 동시 요청 수
 
-      if (isISBN(query)) {
-        const clean = query.replace(/[-\s]/g, '');
-        const idType = clean.length === 13 ? 'ISBN13' : 'ISBN';
-        aladinUrl = base + 'ItemLookUp.aspx?ttbkey=' + encodeURIComponent(TTB_KEY) +
-          '&itemIdType=' + idType + '&ItemId=' + encodeURIComponent(clean) +
-          '&output=js&Version=20131101&Cover=Big&OptResult=fulldescription';
-      } else {
-        aladinUrl = base + 'ItemSearch.aspx?ttbkey=' + encodeURIComponent(TTB_KEY) +
-          '&Query=' + encodeURIComponent(query) + '&QueryType=Title' +
-          '&MaxResults=20&start=1&SearchTarget=Book' +
-          '&output=js&Version=20131101&Cover=Big';
-      }
+  // 알라딘 API는 CORS를 허용하지 않으므로 프록시를 거친다.
+  // 2단계(서버리스 함수로 키 보호 + 빌드 시점 캐싱)로 갈 때 이 배열만 교체하면 된다.
+  const CORS_PROXIES = [
+    (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
+    (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  ];
 
-      // 안정적인 HTTPS 프록시 서버 경유
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(aladinUrl);
+  const CATEGORIES = [
+    { key: '전체',     icon: '🌈', color: '#64748b' },
+    { key: '그림책',   icon: '🖼️', color: '#f4a261' },
+    { key: '문학',     icon: '📖', color: '#9b87c4' },
+    { key: '자연과학', icon: '🔬', color: '#6fa787' },
+    { key: '사회',     icon: '🌍', color: '#c97064' },
+    { key: '역사',     icon: '🏺', color: '#d4a24c' },
+    { key: '예술체육', icon: '🎨', color: '#d98bae' },
+    { key: '언어',     icon: '💬', color: '#5b9bd5' },
+    { key: '기술',     icon: '🔧', color: '#8c8c6a' },
+    { key: '백과사전', icon: '💻', color: '#4c7a8c' },
+    { key: '철학',     icon: '🤔', color: '#a98467' },
+    { key: '종교',     icon: '🕊️', color: '#b7a99a' },
+    { key: '도감·사전', icon: '📗', color: '#5c8a52' },
+    { key: '기타',     icon: '📦', color: '#9ca3af' },
+  ];
+  const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.key, c]));
 
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error('네트워크 응답 오류 (' + res.status + ')');
-      
-      const raw = await res.text();
-      let data;
+  /* =========================================================
+   * 1. 알라딘 API 헬퍼 (검색 탭 + 책장 구경하기 공용)
+   * =======================================================*/
+  async function fetchViaProxy(targetUrl) {
+    let lastErr;
+    for (const build of CORS_PROXIES) {
       try {
-        data = JSON.parse(raw);
+        const res = await fetch(build(targetUrl));
+        if (!res.ok) throw new Error('네트워크 응답 오류 (' + res.status + ')');
+        return await res.text();
       } catch (e) {
-        // 끝자리 세미콜론 제거 후 파싱
-        const cleaned = raw.replace(/;\s*$/, '').trim();
-        data = JSON.parse(cleaned);
+        lastErr = e;
       }
+    }
+    throw lastErr || new Error('프록시 요청 실패');
+  }
 
-      if (data && data.errorCode) {
-        throw new Error(data.errorMessage || 'API 오류');
+  function parseAladinJson(raw) {
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return JSON.parse(raw.replace(/;\s*$/, '').trim());
+    }
+  }
+
+  function isISBN(s) {
+    const t = s.replace(/[-\s]/g, '');
+    return /^(\d{9}[\dXx]|\d{13})$/.test(t);
+  }
+
+  async function aladinSearch(query) {
+    const url = ALADIN_BASE + 'ItemSearch.aspx?ttbkey=' + encodeURIComponent(TTB_KEY) +
+      '&Query=' + encodeURIComponent(query) + '&QueryType=Title' +
+      '&MaxResults=20&start=1&SearchTarget=Book&output=js&Version=20131101&Cover=Big';
+    const data = parseAladinJson(await fetchViaProxy(url));
+    if (data && data.errorCode) throw new Error(data.errorMessage || 'API 오류');
+    return (data && data.item) ? data.item : [];
+  }
+
+  async function aladinLookupByISBN(isbn) {
+    const idType = isbn.replace(/[-\s]/g, '').length === 13 ? 'ISBN13' : 'ISBN';
+    const url = ALADIN_BASE + 'ItemLookUp.aspx?ttbkey=' + encodeURIComponent(TTB_KEY) +
+      '&itemIdType=' + idType + '&ItemId=' + encodeURIComponent(isbn) +
+      '&output=js&Version=20131101&Cover=Big&OptResult=fulldescription';
+    const data = parseAladinJson(await fetchViaProxy(url));
+    if (data && data.errorCode) throw new Error(data.errorMessage || 'API 오류');
+    return (data && data.item && data.item[0]) ? data.item[0] : null;
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (m) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[m]));
+  }
+
+  function cleanDesc(raw) {
+    return String(raw || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  /* =========================================================
+   * 2. 책 검색하기 탭
+   * =======================================================*/
+  function searchCardHtml(item) {
+    const cover = item.cover
+      ? `<img src="${item.cover}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=&quot;noimg&quot;>📕</span>'">`
+      : `<span class="noimg">📕</span>`;
+    const desc = cleanDesc(item.fullDescription || item.description);
+    return `
+      <div class="card">
+        <div class="cover">${cover}</div>
+        <div class="body">
+          <h3>${escapeHtml(item.title)}</h3>
+          <p class="meta">${escapeHtml(item.author || '저자 미상')}</p>
+          <p class="meta">${escapeHtml(item.publisher || '')} ${item.pubDate ? '· ' + escapeHtml(item.pubDate) : ''}</p>
+          ${desc ? `<p class="desc">${escapeHtml(desc)}</p><button class="more-btn" data-toggle type="button">더보기</button>` : ''}
+          <p class="link"><a href="${item.link || '#'}" target="_blank" rel="noopener">알라딘에서 보기 ↗</a></p>
+        </div>
+      </div>`;
+  }
+
+  const queryInput = document.getElementById('query');
+  const searchBtn = document.getElementById('searchBtn');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+
+  async function handleSearch() {
+    const q = queryInput.value.trim();
+    if (!q) return;
+
+    searchBtn.disabled = true;
+    statusEl.textContent = '검색 중입니다...';
+    resultsEl.innerHTML = '';
+
+    try {
+      const items = isISBN(q) ? await (async () => {
+        const item = await aladinLookupByISBN(q.replace(/[-\s]/g, ''));
+        return item ? [item] : [];
+      })() : await aladinSearch(q);
+
+      if (items.length === 0) {
+        statusEl.textContent = '검색 결과가 없습니다.';
+      } else {
+        statusEl.textContent = `총 ${items.length}건의 도서를 찾았습니다.`;
+        resultsEl.innerHTML = items.map(searchCardHtml).join('');
       }
-      return (data && data.item) ? data.item : [];
+    } catch (err) {
+      statusEl.textContent = `검색 중 문제가 발생했어요. (${err.message})`;
+    } finally {
+      searchBtn.disabled = false;
+    }
+  }
+
+  searchBtn.addEventListener('click', handleSearch);
+  queryInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSearch();
+  });
+  resultsEl.addEventListener('click', (e) => {
+    if (e.target.matches('[data-toggle]')) {
+      const desc = e.target.previousElementSibling;
+      if (desc && desc.classList.contains('desc')) {
+        desc.classList.toggle('expanded');
+        e.target.textContent = desc.classList.contains('expanded') ? '접기' : '더보기';
+      }
+    }
+  });
+
+  /* =========================================================
+   * 3. 탭 전환
+   * =======================================================*/
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
+      tabPanels.forEach((p) => p.classList.toggle('active', p.id === 'tab-' + btn.dataset.tab));
+      if (btn.dataset.tab === 'search') {
+        queryInput.focus();
+      }
+    });
+  });
+
+  /* =========================================================
+   * 4. 책장 구경하기 탭
+   * =======================================================*/
+  let allBooks = [];
+  let activeCategory = '전체';
+  const coverCache = new Map(); // isbn -> 알라딘 item (중복 조회 방지)
+
+  const chipRow = document.getElementById('chipRow');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const shelfGrid = document.getElementById('shelfGrid');
+  const shelfEmpty = document.getElementById('shelfEmpty');
+
+  function renderChips() {
+    chipRow.innerHTML = CATEGORIES.map((c) => `
+      <button class="chip ${c.key === activeCategory ? 'active' : ''}" type="button"
+        data-key="${escapeHtml(c.key)}" style="--chip-color:${c.color}">
+        ${c.icon} ${escapeHtml(c.key)}
+      </button>`).join('');
+  }
+
+  function pickRandomBooks(n) {
+    const pool = activeCategory === '전체'
+      ? allBooks
+      : allBooks.filter((b) => b.category === activeCategory);
+    const copy = pool.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy.slice(0, n);
+  }
+
+  function shelfCardHtml(book) {
+    const cat = CATEGORY_MAP[book.category] || CATEGORY_MAP['기타'];
+    return `
+      <div class="shelf-card-wrap" data-id="${escapeHtml(book.id)}">
+        <div class="shelf-cover" style="--cover-color:${cat.color}">
+          <div class="cover-icon">${cat.icon}</div>
+          <div class="cover-title">${escapeHtml(book.title)}</div>
+        </div>
+        <div class="shelf-caption">${escapeHtml(book.title)}</div>
+      </div>`;
+  }
+
+  let currentBatch = [];
+
+  function renderShelf() {
+    currentBatch = pickRandomBooks(SHELF_SAMPLE_SIZE);
+    shelfEmpty.style.display = currentBatch.length ? 'none' : 'block';
+    shelfGrid.innerHTML = currentBatch.map(shelfCardHtml).join('');
+    hydrateCovers(currentBatch);
+  }
+
+  async function hydrateCovers(books) {
+    const targets = books.filter((b) => b.isbn);
+    let idx = 0;
+
+    async function worker() {
+      while (idx < targets.length) {
+        const book = targets[idx++];
+        const wrap = shelfGrid.querySelector(`[data-id="${cssEscape(book.id)}"] .shelf-cover`);
+        if (!wrap) continue;
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        wrap.appendChild(spinner);
+
+        try {
+          let item = coverCache.get(book.isbn);
+          if (item === undefined) {
+            item = await aladinLookupByISBN(book.isbn);
+            coverCache.set(book.isbn, item);
+          }
+          if (item && item.cover) {
+            const img = document.createElement('img');
+            img.src = item.cover;
+            img.alt = '';
+            img.loading = 'lazy';
+            img.onload = () => img.classList.add('loaded');
+            wrap.appendChild(img);
+          }
+        } catch (e) {
+          // 표지 조회 실패 시 기본 아이콘 표지를 그대로 유지한다.
+        } finally {
+          spinner.remove();
+        }
+      }
     }
 
-    function escapeHtml(s) {
-      return String(s || '').replace(/[&<>"']/g, m => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[m]));
+    const workers = Array.from({ length: Math.min(HYDRATE_CONCURRENCY, targets.length) }, worker);
+    await Promise.all(workers);
+  }
+
+  function cssEscape(s) {
+    return String(s).replace(/["\\]/g, '\\$&');
+  }
+
+  chipRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    activeCategory = btn.dataset.key;
+    renderChips();
+    renderShelf();
+  });
+  shuffleBtn.addEventListener('click', renderShelf);
+
+  /* =========================================================
+   * 5. 상세 모달 (책장 카드 클릭 시)
+   * =======================================================*/
+  const modal = document.getElementById('modal');
+  const modalBody = document.getElementById('modalBody');
+
+  function statusBadge(status) {
+    if (status === '대출가능' || status === '비치도서' || status === '지정도서') {
+      return `<span class="badge ok">✅ ${escapeHtml(status)}</span>`;
+    }
+    if (status === '대출중' || status === '예약중') {
+      return `<span class="badge no">📕 ${escapeHtml(status)}</span>`;
+    }
+    return `<span class="badge etc">${escapeHtml(status)}</span>`;
+  }
+
+  function openModalForBook(book) {
+    const cat = CATEGORY_MAP[book.category] || CATEGORY_MAP['기타'];
+    modalBody.innerHTML = `
+      <div class="modal-top">
+        <div class="modal-cover" id="modalCover" style="background:${cat.color}">
+          <div class="cover-icon">${cat.icon}</div>
+        </div>
+        <div>
+          <div class="modal-title">${escapeHtml(book.title)}</div>
+          <p class="modal-meta">${escapeHtml(book.author || '저자 미상')}</p>
+          <p class="modal-meta">${escapeHtml(book.publisher || '')} ${book.year ? '· ' + escapeHtml(book.year) : ''}</p>
+          <p class="modal-meta">📍 ${escapeHtml(book.location || '')} · 청구기호 ${escapeHtml(book.callNumber || '-')}</p>
+          ${statusBadge(book.status)}
+        </div>
+      </div>
+      <p class="modal-desc muted" id="modalDesc">줄거리를 불러오는 중이에요...</p>
+    `;
+    modal.classList.remove('hidden');
+
+    if (!book.isbn) {
+      document.getElementById('modalDesc').textContent = '이 책은 소개 정보를 연결할 ISBN이 없어요.';
+      return;
     }
 
-    function cleanDesc(raw) {
-      return String(raw || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-    }
-
-    function cardHtml(item) {
-      const cover = item.cover
-        ? `<img src="${item.cover}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'noimg\\'>📕</span>'">`
-        : `<span class="noimg">📕</span>`;
-      const desc = cleanDesc(item.fullDescription || item.description);
-      return `
-        <div class="card">
-          <div class="cover">${cover}</div>
-          <div class="body">
-            <h3>${escapeHtml(item.title)}</h3>
-            <p class="meta">${escapeHtml(item.author || '저자 미상')}</p>
-            <p class="meta">${escapeHtml(item.publisher || '')} ${item.pubDate ? '· ' + escapeHtml(item.pubDate) : ''}</p>
-            ${desc ? `<p class="desc">${escapeHtml(desc)}</p><button class="more-btn" data-toggle>더보기</button>` : ''}
-            <p class="link"><a href="${item.link || '#'}" target="_blank" rel="noopener">알라딘에서 보기 ↗</a></p>
-          </div>
-        </div>`;
-    }
-
-    const queryInput = document.getElementById('query');
-    const searchBtn = document.getElementById('searchBtn');
-    const statusEl = document.getElementById('status');
-    const resultsEl = document.getElementById('results');
-
-    async function handleSearch() {
-      const q = queryInput.value.trim();
-      if (!q) return;
-
-      statusEl.textContent = '검색 중입니다...';
-      resultsEl.innerHTML = '';
-
+    (async () => {
       try {
-        const items = await searchBooks(q);
-        if (items.length === 0) {
-          statusEl.textContent = '검색 결과가 없습니다.';
+        let item = coverCache.get(book.isbn);
+        if (item === undefined) {
+          item = await aladinLookupByISBN(book.isbn);
+          coverCache.set(book.isbn, item);
+        }
+        const descEl = document.getElementById('modalDesc');
+        const coverEl = document.getElementById('modalCover');
+        if (!coverEl || !descEl) return; // 모달이 이미 닫힌 경우
+
+        if (item && item.cover) {
+          coverEl.innerHTML = `<img src="${item.cover}" alt="">`;
+        }
+        const desc = item ? cleanDesc(item.fullDescription || item.description) : '';
+        if (desc) {
+          descEl.textContent = desc;
+          descEl.classList.remove('muted');
         } else {
-          statusEl.textContent = `총 ${items.length}건의 도서를 찾았습니다.`;
-          resultsEl.innerHTML = items.map(cardHtml).join('');
+          descEl.textContent = '알라딘에 등록된 소개 정보가 없어요.';
         }
-      } catch (err) {
-        statusEl.textContent = `검색 중 문제가 발생했어요. (${err.message})`;
+        if (item && item.link) {
+          descEl.insertAdjacentHTML('afterend',
+            `<a class="modal-link" href="${item.link}" target="_blank" rel="noopener">알라딘에서 보기 ↗</a>`);
+        }
+      } catch (e) {
+        const descEl = document.getElementById('modalDesc');
+        if (descEl) descEl.textContent = '소개 정보를 불러오지 못했어요.';
       }
+    })();
+  }
+
+  shelfGrid.addEventListener('click', (e) => {
+    const wrap = e.target.closest('.shelf-card-wrap');
+    if (!wrap) return;
+    const book = currentBatch.find((b) => b.id === wrap.dataset.id);
+    if (book) openModalForBook(book);
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target.matches('[data-close]')) modal.classList.add('hidden');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') modal.classList.add('hidden');
+  });
+
+  /* =========================================================
+   * 6. 초기 로드
+   * =======================================================*/
+  async function init() {
+    renderChips();
+    try {
+      const res = await fetch(BOOKS_JSON_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      allBooks = await res.json();
+      renderShelf();
+    } catch (e) {
+      shelfGrid.innerHTML = '';
+      shelfEmpty.textContent = '도서 목록을 불러오지 못했어요. data/books.json 파일을 확인해 주세요.';
+      shelfEmpty.style.display = 'block';
     }
+  }
 
-    searchBtn.addEventListener('click', handleSearch);
-    queryInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleSearch();
-    });
-
-    resultsEl.addEventListener('click', (e) => {
-      if (e.target.matches('[data-toggle]')) {
-        const desc = e.target.previousElementSibling;
-        if (desc && desc.classList.contains('desc')) {
-          desc.classList.toggle('expanded');
-          e.target.textContent = desc.classList.contains('expanded') ? '접기' : '더보기';
-        }
-      }
-    });
-  </script>
+  init();
+})();
+</script>
 </body>
 </html>
