@@ -57,17 +57,18 @@
 ## 파일 구성
 ```
 index.html              # 앱 전체(HTML+CSS+JS 단일 파일, GitHub Pages에 그대로 배포)
-data/collection_source.xlsx  # 도서관에서 내려받은 원본 소장도서 목록
-data/books.json          # 위 xlsx를 build_books.py로 변환한 결과 (index.html이 읽음)
-scripts/build_books.py   # xlsx -> books.json 변환 스크립트
+collection_source.xlsx  # 도서관에서 내려받은 원본 소장도서 목록
+books.json               # 위 xlsx를 build_books.py로 변환한 결과 (index.html이 읽음)
+build_books.py           # xlsx -> books.json 변환 스크립트
 ```
+(모든 파일이 저장소 최상위에 있어야 GitHub Pages와 상대경로 fetch가 정상 동작한다.)
 
 ## 소장도서 목록 갱신 방법 (신간 추가 등)
 1. 도서관리 프로그램에서 소장도서 목록을 xlsx로 새로 내려받는다.
    (열 순서: No, 등록번호, 자료명, 저자, 출판사, 출판년도, 청구기호, 자료상태, 소장처, 가격, ISBN)
-2. 그 파일로 `data/collection_source.xlsx`를 덮어쓴다.
-3. 터미널에서 `pip install openpyxl` (최초 1회) 후 `python3 scripts/build_books.py` 실행
-4. `data/books.json`이 새로 생성되면, 변경된 파일들을 커밋하고 GitHub에 푸시하면 배포에 반영된다.
+2. 그 파일로 `collection_source.xlsx`를 덮어쓴다.
+3. 터미널에서 `pip install openpyxl` (최초 1회) 후 `python3 build_books.py` 실행
+4. `books.json`이 새로 생성되면, 변경된 파일들을 커밋하고 GitHub에 푸시하면 배포에 반영된다.
    (이 반복 절차를 더 쉽게 만드는 자동화는 2단계 과제로 남겨둠)
 
 ## 책장 구경하기 주제 분류 기준
@@ -76,7 +77,7 @@ scripts/build_books.py   # xlsx -> books.json 변환 스크립트
 - 제목에 "도감"·"사전"이 들어간 책(총류 제외)은 "도감·사전"으로 분류
 - 나머지는 KDC 0~9(총류~역사)를 백과사전/철학/종교/사회/자연과학/기술/
   예술체육/언어/문학/역사에 매칭
-- 분류 기준은 `scripts/build_books.py`의 `classify()` 함수에서 조정 가능
+- 분류 기준은 `build_books.py`의 `classify()` 함수에서 조정 가능
 
 ## 알려진 제한사항 (2단계에서 개선 예정)
 - 표지 이미지는 학생이 접속할 때마다 알라딘 API를 실시간 호출해서 가져옴

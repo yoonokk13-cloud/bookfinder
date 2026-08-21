@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-소장도서 xlsx -> data/books.json 변환 스크립트
+소장도서 xlsx -> books.json 변환 스크립트
 
 사용법:
   1. 도서관리 프로그램에서 소장도서 목록을 xlsx로 내려받는다.
      (열 순서: No, 등록번호, 자료명, 저자, 출판사, 출판년도, 청구기호, 자료상태, 소장처, 가격, ISBN)
-  2. 그 파일을 data/collection_source.xlsx 로 덮어쓴다.
-  3. 터미널에서 실행: python3 scripts/build_books.py
-  4. data/books.json 이 새로 생성되면, 그 파일과 index.html 을 함께 커밋/배포한다.
+  2. 그 파일을 collection_source.xlsx 로 덮어쓴다. (이 스크립트와 같은 폴더)
+  3. 터미널에서 실행: python3 build_books.py
+  4. books.json 이 새로 생성되면, 그 파일과 index.html 을 함께 커밋/배포한다.
 
 코드 수정 없이 소장도서 목록만 반복 갱신할 수 있도록 만든 스크립트입니다.
 """
@@ -21,9 +21,9 @@ try:
 except ImportError:
     sys.exit("openpyxl이 필요합니다. 먼저 'pip install openpyxl'을 실행하세요.")
 
-ROOT = Path(__file__).resolve().parent.parent
-SOURCE_XLSX = ROOT / "data" / "collection_source.xlsx"
-OUTPUT_JSON = ROOT / "data" / "books.json"
+ROOT = Path(__file__).resolve().parent
+SOURCE_XLSX = ROOT / "collection_source.xlsx"
+OUTPUT_JSON = ROOT / "books.json"
 
 # 대출 불가한(더 이상 서가에 없는) 자료상태는 책장 구경하기/검색에서 제외한다.
 EXCLUDED_STATUSES = {"분실", "파손", "가치상실"}
