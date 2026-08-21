@@ -46,6 +46,19 @@
   table.cat-table td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
   table.cat-table td:last-child { text-align: right; font-weight: 700; }
   .excluded-note { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+  .delta-note { text-align: center; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px; }
+
+  .mode-option {
+    display: flex; align-items: flex-start; gap: 10px; font-size: 0.92rem; padding: 10px 4px; cursor: pointer;
+  }
+  .mode-option input { margin-top: 3px; }
+  .mode-hint { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+
+  .warning-box {
+    background: #fff7ed; border: 2px solid #fdba74; border-radius: 10px; padding: 14px; margin-top: 6px;
+  }
+  .warning-box p { font-size: 0.9rem; color: #9a3412; font-weight: 700; margin-bottom: 8px; }
+  .warning-box .mode-option { padding: 0; color: #9a3412; }
 
   .download-btn {
     display: block; width: 100%; border: none; background: var(--accent); color: #fff; font-weight: 800;
@@ -64,7 +77,20 @@
     <p class="lead">새로 받은 소장도서 xlsx 파일을 넣으면, 홈페이지가 읽는 <code>books.json</code>을 자동으로 만들어줘요. 터미널이나 프로그램 설치 없이, 이 화면에서 전부 끝나요.</p>
 
     <div class="step">
-      <h2><span class="num">1</span> 새 소장도서 목록 xlsx 파일 넣기</h2>
+      <h2><span class="num">1</span> 이 파일에는 어떤 책이 들어있나요?</h2>
+      <label class="mode-option">
+        <input type="radio" name="mode" value="merge" checked>
+        <span><b>새로 추가된 책만</b> 있어요 (신착도서 등) → 기존 목록에 <b>합쳐줘요</b></span>
+      </label>
+      <label class="mode-option">
+        <input type="radio" name="mode" value="replace">
+        <span><b>학교 전체 소장도서</b>가 다 들어있어요 → 통째로 <b>교체</b>해요</span>
+      </label>
+      <p class="mode-hint" id="currentCountHint"></p>
+    </div>
+
+    <div class="step">
+      <h2><span class="num">2</span> xlsx 파일 넣기</h2>
       <p>도서관리 프로그램에서 내려받은 xlsx 파일을 그대로 넣어주세요. 열 순서가 아래와 같아야 해요.</p>
       <ul><li>No · 등록번호 · 자료명 · 저자 · 출판사 · 출판년도 · 청구기호 · 자료상태 · 소장처 · 가격 · ISBN</li></ul>
       <div class="drop-zone" id="dropZone">
@@ -77,17 +103,22 @@
     </div>
 
     <div class="step" id="summary">
-      <h2><span class="num">2</span> 확인하기</h2>
+      <h2><span class="num">3</span> 확인하기</h2>
       <div class="summary-total" id="summaryTotal"></div>
+      <p class="delta-note" id="deltaNote"></p>
       <table class="cat-table" id="catTable"></table>
       <p class="excluded-note" id="excludedNote"></p>
+      <div class="warning-box" id="warningBox" style="display:none;">
+        <p id="warningText"></p>
+        <label class="mode-option"><input type="checkbox" id="confirmCheck"> <span>확인했어요. 그래도 이대로 진행할게요.</span></label>
+      </div>
     </div>
 
     <div class="step" id="downloadStep" style="display:none;">
-      <h2><span class="num">3</span> books.json 받기</h2>
+      <h2><span class="num">4</span> books.json 받기</h2>
       <p style="margin-bottom:12px;">숫자가 맞다면 아래 버튼을 눌러 내려받으세요.</p>
       <button class="download-btn" id="downloadBtn" type="button">⬇️ books.json 다운로드</button>
-      <p class="done-note">다운로드한 <b>books.json</b>과 방금 넣은 <b>xlsx 파일(collection_source.xlsx로 이름 변경)</b>, 이 두 개를 GitHub 저장소에 올리고 커밋하면 끝이에요. (이전에 index.html 올리셨던 방법과 똑같아요)</p>
+      <p class="done-note" id="doneNote">다운로드한 <b>books.json</b>을 GitHub 저장소에 올리고 커밋하면 끝이에요.</p>
     </div>
   </div>
 
@@ -125,12 +156,34 @@
   const statusEl = document.getElementById('status');
   const summaryEl = document.getElementById('summary');
   const summaryTotalEl = document.getElementById('summaryTotal');
+  const deltaNoteEl = document.getElementById('deltaNote');
   const catTableEl = document.getElementById('catTable');
   const excludedNoteEl = document.getElementById('excludedNote');
+  const warningBoxEl = document.getElementById('warningBox');
+  const warningTextEl = document.getElementById('warningText');
+  const confirmCheckEl = document.getElementById('confirmCheck');
+  const currentCountHintEl = document.getElementById('currentCountHint');
   const downloadStepEl = document.getElementById('downloadStep');
   const downloadBtn = document.getElementById('downloadBtn');
 
   let generatedBooks = null;
+  let currentBooks = null; // 지금 사이트에 배포된 books.json (있으면)
+
+  fetch('books.json').then((r) => (r.ok ? r.json() : null)).then((data) => {
+    if (Array.isArray(data)) {
+      currentBooks = data;
+      currentCountHintEl.textContent = `지금 사이트에는 ${data.length.toLocaleString()}권이 있어요.`;
+    } else {
+      currentCountHintEl.textContent = '';
+    }
+  }).catch(() => { currentCountHintEl.textContent = ''; });
+
+  function getMode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+  }
+  document.querySelectorAll('input[name="mode"]').forEach((el) => {
+    el.addEventListener('change', () => { if (fileInput.__lastFile) handleFile(fileInput.__lastFile); });
+  });
 
   dropZone.addEventListener('click', () => fileInput.click());
   dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
@@ -145,6 +198,7 @@
   });
 
   function handleFile(file) {
+    fileInput.__lastFile = file;
     fileNameEl.textContent = file.name;
     statusEl.textContent = '읽는 중이에요...';
     statusEl.classList.remove('error');
@@ -208,21 +262,61 @@
     }
 
     statusEl.textContent = '✅ 다 읽었어요.';
-    generatedBooks = books;
+
+    const mode = getMode();
+    let finalBooks = books;
+    let deltaText = '';
+
+    if (mode === 'merge' && currentBooks) {
+      const newIds = new Set(books.map((b) => b.id));
+      const kept = currentBooks.filter((b) => !newIds.has(b.id));
+      finalBooks = books.concat(kept);
+      deltaText = `기존 ${currentBooks.length.toLocaleString()}권 + 새 책 ${books.length.toLocaleString()}권 → 총 ${finalBooks.length.toLocaleString()}권`;
+    } else if (currentBooks) {
+      const diff = finalBooks.length - currentBooks.length;
+      deltaText = `이전 ${currentBooks.length.toLocaleString()}권 → 이번 ${finalBooks.length.toLocaleString()}권 (${diff >= 0 ? '+' : ''}${diff.toLocaleString()})`;
+    }
+
+    generatedBooks = finalBooks;
+    deltaNoteEl.textContent = deltaText;
 
     const counts = {};
-    books.forEach((b) => { counts[b.category] = (counts[b.category] || 0) + 1; });
+    finalBooks.forEach((b) => { counts[b.category] = (counts[b.category] || 0) + 1; });
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
-    summaryTotalEl.textContent = `총 ${books.length.toLocaleString()}권`;
+    summaryTotalEl.textContent = `총 ${finalBooks.length.toLocaleString()}권`;
     catTableEl.innerHTML = sorted.map(([cat, n]) => `<tr><td>${cat}</td><td>${n.toLocaleString()}권</td></tr>`).join('');
     excludedNoteEl.textContent = excludedCount > 0
       ? `(분실·파손·가치상실 자료 ${excludedCount}권은 목록에서 제외했어요)`
       : '';
 
+    // 전체 교체 모드인데 책 수가 크게 줄어들면(신착도서만 넣은 실수일 가능성) 경고하고 확인을 받는다.
+    const shrinking = mode === 'replace' && currentBooks && finalBooks.length < currentBooks.length * 0.7;
+    if (shrinking) {
+      warningTextEl.textContent =
+        `⚠️ 지금 ${currentBooks.length.toLocaleString()}권에서 ${finalBooks.length.toLocaleString()}권으로 크게 줄어들어요. `
+        + `혹시 "신착도서만" 내보낸 파일 아닌가요? 그렇다면 위에서 "새로 추가된 책만 있어요"를 선택해 주세요. `
+        + `정말로 전체 목록을 교체하시는 거라면 아래를 확인하고 진행하세요.`;
+      warningBoxEl.style.display = 'block';
+      confirmCheckEl.checked = false;
+      downloadBtn.disabled = true;
+    } else {
+      warningBoxEl.style.display = 'none';
+      downloadBtn.disabled = false;
+    }
+
+    const doneNoteEl = document.getElementById('doneNote');
+    doneNoteEl.innerHTML = mode === 'replace'
+      ? '다운로드한 <b>books.json</b>과, 방금 넣은 xlsx 파일(<b>collection_source.xlsx</b>로 이름 변경)을 함께 GitHub 저장소에 올리고 커밋하면 끝이에요.'
+      : '다운로드한 <b>books.json</b>만 GitHub 저장소에 올리고 커밋하면 끝이에요. (방금 넣은 xlsx는 새 책만 있는 파일이라 collection_source.xlsx로는 올리지 마세요)';
+
     summaryEl.style.display = 'block';
     downloadStepEl.style.display = 'block';
   }
+
+  confirmCheckEl.addEventListener('change', () => {
+    downloadBtn.disabled = !confirmCheckEl.checked;
+  });
 
   downloadBtn.addEventListener('click', () => {
     if (!generatedBooks) return;
