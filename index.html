@@ -529,6 +529,9 @@
       if (items.length === 0) {
         statusEl.textContent = '검색 결과가 없습니다.';
       } else {
+        // 소장 여부를 표시하려면 books.json 로딩이 끝나 있어야 한다.
+        // 너무 오래 걸리면(8초) 소장 여부 없이라도 검색 결과부터 보여준다.
+        await Promise.race([booksReadyPromise, new Promise((r) => setTimeout(r, 8000))]);
         statusEl.textContent = `총 ${items.length}건의 도서를 찾았습니다.`;
         resultsEl.innerHTML = items.map(searchCardHtml).join('');
       }
@@ -584,6 +587,10 @@
   let booksLoaded = false;
   const booksByIsbn = new Map();  // 검색 결과가 우리도서관 소장도서인지 대조할 때 쓴다
   const booksByTitle = new Map();
+  let resolveBooksReady;
+  // books.json 로딩이 끝나면(성공/실패 무관) 풀린다. 검색 결과를 그리기 전에
+  // 이 promise를 기다려서, 소장 여부 표시가 로딩 타이밍 때문에 누락되지 않게 한다.
+  const booksReadyPromise = new Promise((resolve) => { resolveBooksReady = resolve; });
   let activeCategory = '전체';
   const coverCache = new Map(); // isbn -> 알라딘 item (중복 조회 방지)
 
@@ -1107,6 +1114,8 @@
       shelfGrid.innerHTML = '';
       shelfEmpty.textContent = '도서 목록을 불러오지 못했어요. books.json 파일을 확인해 주세요.';
       shelfEmpty.style.display = 'block';
+    } finally {
+      resolveBooksReady(); // 성공하든 실패하든 검색 화면이 더는 기다리지 않게 한다
     }
   }
 
