@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소장도서 목록 갱신 도구</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --primary: #4f46e5; --primary-hover: #4338ca; --accent: #f4a261; --accent-hover: #e8934a;
+    --bg: #f8fafc; --card-bg: #fff; --text: #1e293b; --text-muted: #64748b;
+    --border: #e2e8f0; --radius: 14px; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); line-height: 1.7; padding: 32px 20px 80px; }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  a.back { color: var(--text-muted); font-size: 0.9rem; text-decoration: none; }
+  a.back:hover { text-decoration: underline; }
+  h1 { font-size: 1.5rem; font-weight: 800; margin: 14px 0 6px; }
+  p.lead { color: var(--text-muted); margin-bottom: 24px; }
+
+  .step { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  .step h2 { font-size: 1rem; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .step h2 .num { background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+  .step p { font-size: 0.92rem; color: var(--text-muted); }
+  .step ul { margin: 8px 0 0 20px; font-size: 0.92rem; color: var(--text-muted); }
+
+  #fileInput { display: none; }
+  .drop-zone {
+    border: 3px dashed var(--border); border-radius: var(--radius); padding: 36px 20px; text-align: center;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: #eef0ff; }
+  .drop-zone .big { font-size: 2rem; margin-bottom: 8px; }
+  .drop-zone .fname { margin-top: 10px; font-weight: 700; color: var(--primary); }
+
+  #status { text-align: center; margin: 14px 0; font-size: 0.95rem; color: var(--text-muted); min-height: 1.4em; }
+  #status.error { color: #b91c1c; font-weight: 600; }
+
+  #summary { display: none; }
+  .summary-total { text-align: center; font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-bottom: 14px; }
+  table.cat-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 14px; }
+  table.cat-table td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  table.cat-table td:last-child { text-align: right; font-weight: 700; }
+  .excluded-note { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+
+  .download-btn {
+    display: block; width: 100%; border: none; background: var(--accent); color: #fff; font-weight: 800;
+    font-size: 1.05rem; padding: 16px; border-radius: var(--radius); cursor: pointer; box-shadow: var(--shadow);
+  }
+  .download-btn:hover { background: var(--accent-hover); }
+  .download-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .done-note { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">← 책 찾기로 돌아가기</a>
+    <h1>📊 소장도서 목록 갱신 도구</h1>
+    <p class="lead">새로 받은 소장도서 xlsx 파일을 넣으면, 홈페이지가 읽는 <code>books.json</code>을 자동으로 만들어줘요. 터미널이나 프로그램 설치 없이, 이 화면에서 전부 끝나요.</p>
+
+    <div class="step">
+      <h2><span class="num">1</span> 새 소장도서 목록 xlsx 파일 넣기</h2>
+      <p>도서관리 프로그램에서 내려받은 xlsx 파일을 그대로 넣어주세요. 열 순서가 아래와 같아야 해요.</p>
+      <ul><li>No · 등록번호 · 자료명 · 저자 · 출판사 · 출판년도 · 청구기호 · 자료상태 · 소장처 · 가격 · ISBN</li></ul>
+      <div class="drop-zone" id="dropZone">
+        <div class="big">📁</div>
+        <div>여기를 눌러 파일 선택 (또는 파일을 끌어다 놓기)</div>
+        <div class="fname" id="fileName"></div>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx">
+      <p id="status"></p>
+    </div>
+
+    <div class="step" id="summary">
+      <h2><span class="num">2</span> 확인하기</h2>
+      <div class="summary-total" id="summaryTotal"></div>
+      <table class="cat-table" id="catTable"></table>
+      <p class="excluded-note" id="excludedNote"></p>
+    </div>
+
+    <div class="step" id="downloadStep" style="display:none;">
+      <h2><span class="num">3</span> books.json 받기</h2>
+      <p style="margin-bottom:12px;">숫자가 맞다면 아래 버튼을 눌러 내려받으세요.</p>
+      <button class="download-btn" id="downloadBtn" type="button">⬇️ books.json 다운로드</button>
+      <p class="done-note">다운로드한 <b>books.json</b>과 방금 넣은 <b>xlsx 파일(collection_source.xlsx로 이름 변경)</b>, 이 두 개를 GitHub 저장소에 올리고 커밋하면 끝이에요. (이전에 index.html 올리셨던 방법과 똑같아요)</p>
+    </div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  const EXCLUDED_STATUSES = new Set(['분실', '파손', '가치상실']);
+  const KDC_CATEGORY = {
+    0: '백과사전', 1: '철학', 2: '종교', 3: '사회', 4: '자연과학',
+    5: '기술', 6: '예술체육', 7: '언어', 8: '문학', 9: '역사',
+  };
+  const ISBN10_RE = /^\d{9}[\dXx]$/;
+  const ISBN13_RE = /^\d{13}$/;
+
+  function classify(callNumber, location, title) {
+    if (location === '그림책서가') return '그림책';
+    const m = /(\d+(?:\.\d+)?)/.exec(callNumber || '');
+    if (!m) return '기타';
+    const kdcMain = Math.floor(parseFloat(m[1]) / 100);
+    if (kdcMain !== 0 && title && (title.includes('도감') || title.includes('사전'))) return '도감·사전';
+    return KDC_CATEGORY[kdcMain] || '기타';
+  }
+
+  function normalizeIsbn(raw) {
+    if (raw === undefined || raw === null) return '';
+    const s = String(raw).trim().replace(/-/g, '');
+    if (ISBN10_RE.test(s) || ISBN13_RE.test(s)) return s;
+    return '';
+  }
+
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileNameEl = document.getElementById('fileName');
+  const statusEl = document.getElementById('status');
+  const summaryEl = document.getElementById('summary');
+  const summaryTotalEl = document.getElementById('summaryTotal');
+  const catTableEl = document.getElementById('catTable');
+  const excludedNoteEl = document.getElementById('excludedNote');
+  const downloadStepEl = document.getElementById('downloadStep');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let generatedBooks = null;
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    fileNameEl.textContent = file.name;
+    statusEl.textContent = '읽는 중이에요...';
+    statusEl.classList.remove('error');
+    summaryEl.style.display = 'none';
+    downloadStepEl.style.display = 'none';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+        processRows(rows);
+      } catch (err) {
+        statusEl.textContent = '파일을 읽지 못했어요. xlsx 파일이 맞는지 확인해 주세요. (' + err.message + ')';
+        statusEl.classList.add('error');
+      }
+    };
+    reader.onerror = () => {
+      statusEl.textContent = '파일을 읽지 못했어요.';
+      statusEl.classList.add('error');
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processRows(rows) {
+    if (!rows || rows.length < 2) {
+      statusEl.textContent = '내용이 없는 파일이에요.';
+      statusEl.classList.add('error');
+      return;
+    }
+
+    const books = [];
+    let excludedCount = 0;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 11) continue;
+      const [, regNo, title, author, publisher, year, callNumber, status, location, , isbn] = row;
+      if (!title || !regNo) continue;
+      if (EXCLUDED_STATUSES.has(status)) { excludedCount++; continue; }
+
+      books.push({
+        id: String(regNo).trim(),
+        title: String(title).trim(),
+        author: String(author || '').trim(),
+        publisher: String(publisher || '').trim(),
+        year: String(year || '').trim(),
+        callNumber: String(callNumber || '').trim(),
+        status: String(status || '').trim(),
+        location: String(location || '').trim(),
+        isbn: normalizeIsbn(isbn),
+        category: classify(String(callNumber || '').trim(), String(location || '').trim(), String(title).trim()),
+      });
+    }
+
+    if (books.length === 0) {
+      statusEl.textContent = '책 정보를 하나도 찾지 못했어요. 열 순서가 맞는지 확인해 주세요.';
+      statusEl.classList.add('error');
+      return;
+    }
+
+    statusEl.textContent = '✅ 다 읽었어요.';
+    generatedBooks = books;
+
+    const counts = {};
+    books.forEach((b) => { counts[b.category] = (counts[b.category] || 0) + 1; });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+    summaryTotalEl.textContent = `총 ${books.length.toLocaleString()}권`;
+    catTableEl.innerHTML = sorted.map(([cat, n]) => `<tr><td>${cat}</td><td>${n.toLocaleString()}권</td></tr>`).join('');
+    excludedNoteEl.textContent = excludedCount > 0
+      ? `(분실·파손·가치상실 자료 ${excludedCount}권은 목록에서 제외했어요)`
+      : '';
+
+    summaryEl.style.display = 'block';
+    downloadStepEl.style.display = 'block';
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    if (!generatedBooks) return;
+    const blob = new Blob([JSON.stringify(generatedBooks)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'books.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+</body>
+</html>

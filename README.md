@@ -26,9 +26,8 @@
   학생이 접속할 때마다 실시간으로 API 호출하는 대신, **빌드/배포 
   시점에 미리 한 번에 가져와 캐싱**하는 방식으로 전환 권장 
   (알라딘 일일 호출 제한 5,000건 보호 + 속도 개선)
-- 사서교사가 개발자가 아니므로, 소장도서 목록 갱신(신간 추가 등)을 
-  코드 수정 없이 반복할 수 있는 쉬운 절차(예: xlsx 재업로드 → 
-  자동 재배포 스크립트) 마련
+- ✅ 사서교사가 개발자가 아니므로, 소장도서 목록 갱신(신간 추가 등)을 
+  코드 수정 없이 반복할 수 있는 쉬운 절차 마련 → `update-books.html`로 해결
 - HTTPS는 위 호스팅들이 기본 제공 → 별도 인증서 작업 불필요
 
 ## 특징
@@ -57,19 +56,26 @@
 ## 파일 구성
 ```
 index.html              # 앱 전체(HTML+CSS+JS 단일 파일, GitHub Pages에 그대로 배포)
+update-books.html        # 소장도서 xlsx -> books.json 변환 도구 (브라우저에서 실행, 비개발자용)
 collection_source.xlsx  # 도서관에서 내려받은 원본 소장도서 목록
-books.json               # 위 xlsx를 build_books.py로 변환한 결과 (index.html이 읽음)
-build_books.py           # xlsx -> books.json 변환 스크립트
+books.json               # 위 xlsx를 변환한 결과 (index.html이 읽음)
+build_books.py           # xlsx -> books.json 변환 스크립트 (터미널용, update-books.html과 로직 동일)
 ```
 (모든 파일이 저장소 최상위에 있어야 GitHub Pages와 상대경로 fetch가 정상 동작한다.)
 
-## 소장도서 목록 갱신 방법 (신간 추가 등)
-1. 도서관리 프로그램에서 소장도서 목록을 xlsx로 새로 내려받는다.
+## 소장도서 목록 갱신 방법 (신간 추가 등) — 비개발자용, 터미널 필요 없음
+1. 배포된 사이트 주소 뒤에 `/update-books.html`을 붙여서 접속한다.
+   (예: `https://yoonokk13-cloud.github.io/bookfinder/update-books.html`)
+2. 도서관리 프로그램에서 새로 받은 소장도서 xlsx 파일을 화면에 끌어다 놓는다.
    (열 순서: No, 등록번호, 자료명, 저자, 출판사, 출판년도, 청구기호, 자료상태, 소장처, 가격, ISBN)
-2. 그 파일로 `collection_source.xlsx`를 덮어쓴다.
-3. 터미널에서 `pip install openpyxl` (최초 1회) 후 `python3 build_books.py` 실행
-4. `books.json`이 새로 생성되면, 변경된 파일들을 커밋하고 GitHub에 푸시하면 배포에 반영된다.
-   (이 반복 절차를 더 쉽게 만드는 자동화는 2단계 과제로 남겨둠)
+3. 화면에 뜨는 총 권수·주제별 권수가 맞는지 확인한다.
+4. "books.json 다운로드" 버튼을 눌러 파일을 받는다.
+5. 다운로드한 `books.json`과, 방금 넣은 xlsx 파일(`collection_source.xlsx`로 이름 변경)
+   두 개를 GitHub 저장소에 업로드하고 커밋한다. (index.html 처음 올릴 때와 같은 방법)
+
+터미널을 쓸 수 있는 사람이라면 `python3 build_books.py`(로컬에 `collection_source.xlsx`를
+먼저 덮어쓴 뒤 실행)로도 똑같은 결과를 만들 수 있다. 두 방법은 완전히 같은 로직이라
+결과 파일이 동일하다.
 
 ## 책장 구경하기 주제 분류 기준
 청구기호(KDC 앞자리)와 소장처를 기준으로 13개 주제로 자동 분류한다.
