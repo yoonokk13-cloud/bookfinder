@@ -391,10 +391,11 @@
 
   // 알라딘 API는 CORS를 허용하지 않으므로 프록시를 거친다.
   // 2단계(서버리스 함수로 키 보호 + 빌드 시점 캐싱)로 갈 때 이 배열만 교체하면 된다.
-  const CORS_PROXIES = [
-    (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
-    (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-  ];
+ const CORS_PROXIES = [
+  (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
+  (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  (url) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+];
 
   const CATEGORIES = [
     { key: '전체',     icon: '🌈', color: '#64748b' },
